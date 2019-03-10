@@ -3,13 +3,25 @@ const path = require('path');
 const morganLogger = require('morgan');
 const bodyParser = require('body-parser');
 
-const logger = require('./Helpers/LogHelper').getLogger(__filename);
+const logger = require('./Helpers/logHelper').getLogger(__filename);
 const responseMiddleware =  require('./Middleware/responseMiddleware');
+const jwtCheck = require('./Middleware/jwtCheckMiddleware');
+
+const graphqlHTTP = require('express-graphql');
+const graphQLSchema = require('./graphQL/graphQLSchema');
+const graphQLRootResolver = require('./graphQL/graphQLRootResolver');
 
 // Setup Routers
 const index = require('./Routers/index');
 
 const app = express();
+
+// Check for env environment variable
+if (!process.env.NODE_ENV) {
+    logger.error('Environment env variable not set');
+    logger.error('NODE_ENV is required, Aborting');
+    process.exit(1);
+}
 
 
 // Middleware
@@ -26,6 +38,15 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     next();
 });
+
+
+// Require authentication for all remaining roots
+app.use(jwtCheck);                                        // MOVING HANDLERS ABOVE THIS LINE WILL MAKE THEM UNPROTECTED!
+
+app.use('/graphql', graphqlHTTP({
+    schema: graphQLSchema.authenticatedSchema,
+    rootValue: graphQLRootResolver.authenticatedRoot
+}));
 
 // Routers
 app.use('/', index);

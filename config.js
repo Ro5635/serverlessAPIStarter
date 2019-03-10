@@ -7,7 +7,8 @@
 const env = process.env.NODE_ENV;
 
 const defaultConfig = {
-    AWS_API_CONFIG: {region: "local", endpoint: 'http://localhost:8000'}
+    AWS_API_CONFIG: {region: "local", endpoint: 'http://localhost:8000'},
+    JWTSigningKey: process.env.JWTSigningKey
 };
 
 const dev = {};
